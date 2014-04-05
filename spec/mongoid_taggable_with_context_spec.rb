@@ -394,6 +394,14 @@ describe Mongoid::TaggableWithContext do
         klass.artists("user2").should == %w[aaron andy mandy]
       end
 
+      it "should retrieve the list of all saved tags distinct and ordered with limit" do
+        klass.tags("user1", {limit: 1}).should == %w[ant]
+        klass.tags("user2", {limit: 1}).should == %w[food]
+
+        klass.artists("user1", {limit: 2}).should == %w[aaron andrew]
+        klass.artists("user2", {limit: 2}).should == %w[aaron andy]
+      end
+
       it "should retrieve a list of tags with weight" do
         klass.tags_with_weight("user1").should == [
             ['ant', 1],

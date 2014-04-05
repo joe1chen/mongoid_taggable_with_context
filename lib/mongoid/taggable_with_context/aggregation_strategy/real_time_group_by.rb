@@ -10,18 +10,18 @@ module Mongoid::TaggableWithContext::AggregationStrategy
 
       def tags_for(context, group_by, conditions={})
         results = if group_by
-          query(context, group_by).to_a.map{ |t| t[tag_name_attribute] }
+          query(context, group_by, conditions).to_a.map{ |t| t[tag_name_attribute] }
         else
-          super(context, conditions)
+          super(context, group_by, conditions)
         end
         results.uniq
       end
 
       def tags_with_weight_for(context, group_by, conditions={})
         results = if group_by
-          query(context, group_by).to_a.map{ |t| [t[tag_name_attribute], t["value"].to_i] }
+          query(context, group_by, conditions).to_a.map{ |t| [t[tag_name_attribute], t["value"].to_i] }
         else
-          super(context, conditions)
+          super(context, group_by, conditions)
         end
 
         tag_hash = {}
@@ -33,8 +33,22 @@ module Mongoid::TaggableWithContext::AggregationStrategy
       end
 
       protected
-      def query(context, group_by)
-        aggregation_database_collection_for(context).find({value: {"$gt" => 0 }, group_by: group_by}).sort(tag_name_attribute.to_sym => 1)
+      def query(context, group_by, conditions)
+        if conditions[:limit]
+          limit = conditions.delete(:limit)
+        end
+
+        if group_by
+          query = aggregation_database_collection_for(context).find({value: {"$gt" => 0 }, group_by: group_by}.merge(conditions || {}))
+        else
+          query = aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}.merge(conditions || {}))
+        end
+
+        if limit
+          query = query.limit(limit)
+        end
+
+        query.sort(tag_name_attribute.to_sym => 1)
       end
     end
 

@@ -22,20 +22,32 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         "#{collection_name}_#{context}_aggregation"
       end
 
-      def tags_for(context, conditions={})
-        aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}).sort(_id: 1).to_a.map{ |t| t["_id"] }
+      def tags_for(context, group_by = nil, conditions={})
+        query(context, group_by, conditions).to_a.map{ |t| t["_id"] }
       end
 
       # retrieve the list of tag with weight(count), this is useful for
       # creating tag clouds
-      def tags_with_weight_for(context, conditions={})
-        aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}).sort(_id: 1).to_a.map{ |t| [t["_id"], t["value"].to_i] }
+      def tags_with_weight_for(context, group_by = nil, conditions={})
+        query(context, group_by, conditions).to_a.map{ |t| [t["_id"], t["value"].to_i] }
       end
-      
+
+      def query(context, group_by, conditions)
+        if conditions[:limit]
+          limit = conditions.delete(:limit)
+        end
+
+        query = aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}.merge(conditions || {}))
+
+        if limit
+          query = query.limit(limit)
+        end
+
+        query.sort(_id: 1)
+      end
     end
     
     protected
-
     def changed_tag_arrays
       self.class.tag_database_fields & changes.keys.map(&:to_sym)
     end

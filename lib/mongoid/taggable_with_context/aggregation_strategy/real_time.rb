@@ -26,14 +26,14 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         "#{collection_name}_#{context}_aggregation"
       end
 
-      def tags_for(context, conditions={})
-        aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}).sort(tag_name_attribute.to_sym => 1).to_a.map{ |t| t[tag_name_attribute] }
+      def tags_for(context, group_by = nil, conditions={})
+        query(context, group_by, conditions).to_a.map{ |t| t[tag_name_attribute] }
       end
 
       # retrieve the list of tag with weight(count), this is useful for
       # creating tag clouds
-      def tags_with_weight_for(context, conditions={})
-        aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}).sort(tag_name_attribute.to_sym => 1).to_a.map{ |t| [t[tag_name_attribute], t["value"].to_i] }
+      def tags_with_weight_for(context, group_by = nil, conditions={})
+        query(context, group_by, conditions).to_a.map{ |t| [t[tag_name_attribute], t["value"].to_i] }
       end
 
       def recalculate_all_context_tag_weights!
@@ -75,6 +75,21 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         result = result.limit(options[:max]) if options[:max] > 0
         result.to_a.map{ |r| [r[tag_name_attribute], r["value"]] }
       end
+
+      def query(context, group_by, conditions)
+        if conditions[:limit]
+          limit = conditions.delete(:limit)
+        end
+
+        query = aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}.merge(conditions || {}))
+
+        if limit
+          query = query.limit(limit)
+        end
+
+        query.sort(tag_name_attribute.to_sym => 1)
+      end
+
     end
 
     protected

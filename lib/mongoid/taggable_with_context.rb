@@ -230,8 +230,8 @@ module Mongoid::TaggableWithContext
     def define_class_tags_getter(context)
       # retrieve all tags ever created for the model
       self.class.class_eval do
-        define_method context do |group_by = nil|
-          tags_for(context, group_by)
+        define_method context do |group_by = nil, conditions = {}|
+          tags_for(context, group_by, conditions)
         end
       end
     end
@@ -244,8 +244,8 @@ module Mongoid::TaggableWithContext
     # @since 1.1.1
     def define_class_weighted_tags_getter(context)
       self.class.class_eval do
-        define_method :"#{context}_with_weight" do |group_by = nil|
-          tags_with_weight_for(context, group_by)
+        define_method :"#{context}_with_weight" do |group_by = nil, conditions = {}|
+          tags_with_weight_for(context, group_by, conditions)
         end
       end
     end
