@@ -77,17 +77,14 @@ module Mongoid::TaggableWithContext::AggregationStrategy
       end
 
       def query(context, group_by, conditions)
-        if conditions[:limit]
-          limit = conditions.delete(:limit)
-        end
+        queryLimit = conditions.delete(:limit) if conditions[:limit]
+        querySort = conditions.delete(:sort) if conditions[:sort]
 
         query = aggregation_database_collection_for(context).find({value: {"$gt" => 0 }}.merge(conditions || {}))
 
-        if limit
-          query = query.limit(limit)
-        end
-
-        query.sort(tag_name_attribute.to_sym => 1)
+        query = query.limit(queryLimit) if queryLimit
+        query = querySort ? query.sort(querySort) : query.sort(tag_name_attribute.to_sym => 1)
+        query
       end
 
     end
