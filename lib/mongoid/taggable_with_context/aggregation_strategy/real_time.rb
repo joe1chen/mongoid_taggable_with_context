@@ -76,6 +76,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         result.to_a.map{ |r| [r[tag_name_attribute], r["value"]] }
       end
 
+      protected
       def query(context, group_by, conditions)
         queryLimit = conditions.delete(:limit) if conditions[:limit]
         querySort = conditions.delete(:sort) if conditions[:sort]

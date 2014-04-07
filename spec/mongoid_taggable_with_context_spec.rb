@@ -40,6 +40,13 @@ class M3
 end
 
 describe Mongoid::TaggableWithContext do
+  let(:sort) {
+    if Mongoid::TaggableWithContext.mongoid2?
+      [[ :value, :desc ], [ klass.tag_name_attribute.to_sym, :asc ]]
+    else
+      { value: -1, klass.tag_name_attribute.to_sym => 1 }
+    end
+  }
 
   context "default field value" do
     before :each do
@@ -181,6 +188,16 @@ describe Mongoid::TaggableWithContext do
           klass.artists.should == %w[aaron andrew andy grant greg jeff mandy]
         end
 
+        it "should retrieve the list of all saved tags distinct and ordered by weight" do
+          klass.tags(nil, {sort: sort}).should == %w[food bee ant honey juice strip zip]
+          klass.artists(nil, {sort: sort}).should == %w[andy aaron mandy andrew grant greg jeff]
+        end
+
+        it "should retrieve the list of all saved tags distinct and ordered by weight with limit" do
+          klass.tags(nil, {limit: 2, sort: sort}).should == %w[food bee]
+          klass.artists(nil, {limit: 2, sort: sort}).should == %w[andy aaron]
+        end
+
         it "should retrieve a list of tags with weight" do
           klass.tags_with_weight.should == [
             ['ant', 1],
@@ -200,6 +217,40 @@ describe Mongoid::TaggableWithContext do
             ['greg', 1],
             ['jeff', 1],
             ['mandy', 2]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight" do
+          klass.tags_with_weight(nil, {sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2],
+            ['ant', 1],
+            ['honey', 1],
+            ['juice', 1],
+            ['strip', 1],
+            ['zip', 1]
+          ]
+
+          klass.artists_with_weight(nil, {sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2],
+            ['mandy', 2],
+            ['andrew', 1],
+            ['grant', 1],
+            ['greg', 1],
+            ['jeff', 1]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight with limit" do
+          klass.tags_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2]
+          ]
+
+          klass.artists_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2]
           ]
         end
       end
@@ -248,6 +299,40 @@ describe Mongoid::TaggableWithContext do
             ['mandy', 2]
           ]
         end
+
+        it "should retrieve a list of tags with weight ordered by weight" do
+          klass.tags_with_weight(nil, {sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2],
+            ['ant', 1],
+            ['honey', 1],
+            ['juice', 1],
+            ['strip', 1],
+            ['zip', 1]
+          ]
+
+          klass.artists_with_weight(nil, {sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2],
+            ['mandy', 2],
+            ['andrew', 1],
+            ['grant', 1],
+            ['greg', 1],
+            ['jeff', 1]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight with limit" do
+          klass.tags_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2]
+          ]
+
+          klass.artists_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2]
+          ]
+        end
       end
       
       context "on create then update" do
@@ -291,6 +376,42 @@ describe Mongoid::TaggableWithContext do
             ['mandy', 2]
           ]
         end
+
+        it "should retrieve a list of tags with weight ordered by weight" do
+          klass.tags_with_weight(nil, {sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2],
+            ['honey', 2],
+            ['strip', 2],
+            ['ant', 1],
+            ['juice', 1],
+            ['shoe', 1],
+            ['zip', 1]
+          ]
+
+          klass.artists_with_weight(nil, {sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2],
+            ['grant', 2],
+            ['greg', 2],
+            ['mandy', 2],
+            ['andrew', 1],
+            ['gory', 1],
+            ['jeff', 1]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight with limit" do
+          klass.tags_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['food', 3],
+            ['bee', 2]
+          ]
+
+          klass.artists_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['andy', 3],
+            ['aaron', 2]
+          ]
+        end
       end
 
       context "on create, update, then destroy" do
@@ -331,6 +452,39 @@ describe Mongoid::TaggableWithContext do
             ['greg', 2],
             ['jeff', 1],
             ['mandy', 2]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight" do
+          klass.tags_with_weight(nil, {sort: sort}).should == [
+            ['honey', 2],
+            ['strip', 2],
+            ['ant', 1],
+            ['bee', 1],
+            ['food', 1],
+            ['shoe', 1]
+          ]
+
+          klass.artists_with_weight(nil, {sort: sort}).should == [
+            ['aaron', 2],
+            ['greg', 2],
+            ['mandy', 2],
+            ['andy', 1],
+            ['gory', 1],
+            ['grant', 1],
+            ['jeff', 1]
+          ]
+        end
+
+        it "should retrieve a list of tags with weight ordered by weight with limit" do
+          klass.tags_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['honey', 2],
+            ['strip', 2]
+          ]
+
+          klass.artists_with_weight(nil, {limit: 2, sort: sort}).should == [
+            ['aaron', 2],
+            ['greg', 2]
           ]
         end
       end
@@ -380,6 +534,14 @@ describe Mongoid::TaggableWithContext do
     end
 
     context "for groupings" do
+      let(:sort) {
+        if Mongoid::TaggableWithContext.mongoid2?
+          [[ :value, :desc ], [ klass.tag_name_attribute_group_by.to_sym, :asc ]]
+        else
+          { value: -1, klass.tag_name_attribute_group_by.to_sym => 1 }
+        end
+      }
+
       before :each do
         klass.create!(user: "user1", tags: "food ant bee", artists: "jeff greg mandy aaron andy")
         klass.create!(user: "user1", tags: "juice food bee zip", artists: "grant andrew andy")
@@ -392,6 +554,14 @@ describe Mongoid::TaggableWithContext do
 
         klass.artists("user1").should == %w[aaron andrew andy grant greg jeff mandy]
         klass.artists("user2").should == %w[aaron andy mandy]
+      end
+
+      it "should retrieve the list of all saved tags distinct and ordered by weight" do
+        klass.tags("user1", {sort: sort}).should == %w[bee food ant juice zip]
+        klass.tags("user2", {sort: sort}).should == %w[food honey strip]
+
+        klass.artists("user1", {sort: sort}).should == %w[andy aaron andrew grant greg jeff mandy]
+        klass.artists("user2", {sort: sort}).should == %w[aaron andy mandy]
       end
 
       it "should retrieve the list of all saved tags distinct and ordered with limit" do
@@ -431,6 +601,60 @@ describe Mongoid::TaggableWithContext do
             ['aaron', 1],
             ['andy', 1],
             ['mandy', 1]
+        ]
+      end
+
+      it "should retrieve a list of tags with weight ordered by weight" do
+        klass.tags_with_weight("user1", {sort: sort}).should == [
+            ['bee', 2],
+            ['food', 2],
+            ['ant', 1],
+            ['juice', 1],
+            ['zip', 1]
+        ]
+
+        klass.tags_with_weight("user2", {sort: sort}).should == [
+            ['food', 1],
+            ['honey', 1],
+            ['strip', 1]
+        ]
+
+        klass.artists_with_weight("user1", {sort: sort}).should == [
+            ['andy', 2],
+            ['aaron', 1],
+            ['andrew', 1],
+            ['grant', 1],
+            ['greg', 1],
+            ['jeff', 1],
+            ['mandy', 1]
+        ]
+
+        klass.artists_with_weight("user2", {sort: sort}).should == [
+            ['aaron', 1],
+            ['andy', 1],
+            ['mandy', 1]
+        ]
+      end
+
+      it "should retrieve a list of tags with weight ordered by weight with limit" do
+        klass.tags_with_weight("user1", {limit: 2, sort: sort}).should == [
+            ['bee', 2],
+            ['food', 2]
+        ]
+
+        klass.tags_with_weight("user2", {limit: 2, sort: sort}).should == [
+            ['food', 1],
+            ['honey', 1]
+        ]
+
+        klass.artists_with_weight("user1", {limit: 2, sort: sort}).should == [
+            ['andy', 2],
+            ['aaron', 1]
+        ]
+
+        klass.artists_with_weight("user2", {limit: 2, sort: sort}).should == [
+            ['aaron', 1],
+            ['andy', 1]
         ]
       end
     end

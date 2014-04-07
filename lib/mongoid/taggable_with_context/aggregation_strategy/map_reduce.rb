@@ -8,6 +8,10 @@ module Mongoid::TaggableWithContext::AggregationStrategy
     end
     
     module ClassMethods
+      def tag_name_attribute
+        "_id"
+      end
+
       # Collection name for storing results of tag count aggregation
       
       def aggregation_database_collection_for(context)
