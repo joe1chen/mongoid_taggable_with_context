@@ -23,7 +23,6 @@ matrix:
       env: MONGOID_VERSION=4
   allow_failures:
     - rvm: rbx-2
-      env: MONGOID_VERSION=4
     - rvm: jruby
 
 cache: bundler
