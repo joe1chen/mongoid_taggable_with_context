@@ -1,11 +1,7 @@
 language: ruby
 
 rvm:
-  - 1.9.3
-  - 2.0.0
   - 2.3.3
-  - jruby
-  - rbx-2
 
 services:
   - mongodb
@@ -15,10 +11,5 @@ env:
   - MONGOID_VERSION=3
   - MONGOID_VERSION=4
   - MONGOID_VERSION=5
-
-matrix:
-  allow_failures:
-    - rvm: rbx-2
-    - rvm: jruby
 
 cache: bundler
