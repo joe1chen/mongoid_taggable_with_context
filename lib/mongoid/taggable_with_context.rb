@@ -185,7 +185,7 @@ module Mongoid::TaggableWithContext
     #
     # @since 1.1.1
     def mongoid_field_options(options = {})
-      if Mongoid::TaggableWithContext.mongoid2?
+      if Mongoid::Compatibility::Version.mongoid2?
         options.merge!(type: Array) # Skip validation for mongoid2
       else
         options.slice(*::Mongoid::Fields::Validators::Macro::OPTIONS).merge!(type: Array)
@@ -198,7 +198,7 @@ module Mongoid::TaggableWithContext
     #
     # @since 1.1.1
     def create_taggable_mongoid_index(name)
-      if Mongoid::TaggableWithContext.mongoid2?
+      if Mongoid::Compatibility::Version.mongoid2?
         index :name, background: true
       else
         index({ name => 1 }, { background: true })

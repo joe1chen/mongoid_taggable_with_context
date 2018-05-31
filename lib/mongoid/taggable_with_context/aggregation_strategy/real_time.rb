@@ -15,10 +15,12 @@ module Mongoid::TaggableWithContext::AggregationStrategy
       # Collection name for storing results of tag count aggregation
 
       def aggregation_database_collection_for(context)
-        if Mongoid::TaggableWithContext.mongoid2?
+        if Mongoid::Compatibility::Version.mongoid2?
           (@aggregation_database_collection ||= {})[context] ||= db.collection(aggregation_collection_for(context))
-        else
+        elsif Mongoid::Compatibility::Version.mongoid3? || Mongoid::Compatibility::Version.mongoid4?
           (@aggregation_database_collection ||= {})[context] ||= Moped::Collection.new(self.collection.database, aggregation_collection_for(context))
+        else
+          (@aggregation_database_collection ||= {})[context] ||= Mongo::Collection.new(self.collection.database, aggregation_collection_for(context))
         end
       end
 
@@ -61,7 +63,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         }
         END
 
-        if Mongoid::TaggableWithContext.mongoid2?
+        if Mongoid::Compatibility::Version.mongoid2?
           collection.master.map_reduce(map, reduce, :out => aggregation_collection_for(context))
         else
           self.class.map_reduce(map, reduce).out(replace: aggregation_collection_for(context)).time
@@ -97,7 +99,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
     end
     
     def update_tags_aggregation(context, old_tags=[], new_tags=[])
-      if Mongoid::TaggableWithContext.mongoid2?
+      if Mongoid::Compatibility::Version.mongoid2?
         coll = self.class.db.collection(self.class.aggregation_collection_for(context))
       else
         coll = self.class.aggregation_database_collection_for(context)
@@ -111,17 +113,21 @@ module Mongoid::TaggableWithContext::AggregationStrategy
 
       
       tags_removed.each do |tag|
-        if Mongoid::TaggableWithContext.mongoid2?
+        if Mongoid::Compatibility::Version.mongoid2?
           coll.update(get_conditions(context, tag), {'$inc' => {:value => -1}}, :upsert => true)
-        else
+        elsif Mongoid::Compatibility::Version.mongoid3? || Mongoid::Compatibility::Version.mongoid4?
           coll.find(get_conditions(context, tag)).upsert({'$inc' => {value: -1}})
+        else
+          coll.find(get_conditions(context, tag)).update_many({'$inc' => {value: -1}}, { upsert: true })
         end
       end
       tags_added.each do |tag|
-        if Mongoid::TaggableWithContext.mongoid2?
+        if Mongoid::Compatibility::Version.mongoid2?
           coll.update(get_conditions(context, tag), {'$inc' => {:value => 1}}, :upsert => true)
-        else
+        elsif Mongoid::Compatibility::Version.mongoid3? || Mongoid::Compatibility::Version.mongoid4?
           coll.find(get_conditions(context, tag)).upsert({'$inc' => {value: 1}})
+        else
+          coll.find(get_conditions(context, tag)).update_many({'$inc' => {value: 1}}, { upsert: true })
         end
       end
       #coll.find({_id: {"$in" => tags_removed}}).update({'$inc' => {:value => -1}}, [:upsert])

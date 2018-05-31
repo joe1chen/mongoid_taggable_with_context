@@ -41,7 +41,7 @@ end
 
 describe Mongoid::TaggableWithContext do
   let(:sort) {
-    if Mongoid::TaggableWithContext.mongoid2?
+    if Mongoid::Compatibility::Version.mongoid2?
       [[ :value, :desc ], [ klass.tag_name_attribute.to_sym, :asc ]]
     else
       { value: -1, klass.tag_name_attribute.to_sym => 1 }
@@ -535,7 +535,7 @@ describe Mongoid::TaggableWithContext do
 
     context "for groupings" do
       let(:sort) {
-        if Mongoid::TaggableWithContext.mongoid2?
+        if Mongoid::Compatibility::Version.mongoid2?
           [[ :value, :desc ], [ klass.tag_name_attribute_group_by.to_sym, :asc ]]
         else
           { value: -1, klass.tag_name_attribute_group_by.to_sym => 1 }
