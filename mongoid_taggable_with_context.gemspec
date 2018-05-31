@@ -51,6 +51,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<yard>, [">= 0"])
       s.add_development_dependency(%q<bundler>, [">= 1.0.0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<database_cleaner>)
     else
       s.add_dependency(%q<mongoid>)
       s.add_dependency(%q<rake>, [">= 0"])
@@ -58,6 +59,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<yard>, [">= 0"])
       s.add_dependency(%q<bundler>, [">= 1.0.0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
+      s.add_dependency(%q<database_cleaner>)
     end
   else
     s.add_dependency(%q<mongoid>)
@@ -66,6 +68,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<yard>, [">= 0"])
     s.add_dependency(%q<bundler>, [">= 1.0.0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
+    s.add_dependency(%q<database_cleaner>)
   end
 end
 

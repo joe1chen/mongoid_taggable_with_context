@@ -6,8 +6,15 @@ require 'mongoid'
 require 'mongoid_taggable_with_context.rb'
 
 RSpec.configure do |config|
-  config.after(:each) do
-    Mongoid.purge!
+  # Clean up the database
+  require 'database_cleaner'
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :truncation
+    DatabaseCleaner.orm = 'mongoid'
+  end
+
+  config.before(:each) do
+    DatabaseCleaner.clean
   end
 end
 
