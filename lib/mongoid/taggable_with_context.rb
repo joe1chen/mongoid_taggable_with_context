@@ -300,10 +300,19 @@ module Mongoid::TaggableWithContext
     # @since 1.1.1
     def define_instance_tag_setter(context)
       generated_methods.module_eval do
-        re_define_method("#{context}_with_taggable=") do |value|
-          value = self.class.format_tags_for(context, value)
-          self.send("#{context}_without_taggable=", value)
+        if Mongoid::Compatibility::Version.mongoid2?
+          undef_method("#{context}_with_taggable=") if method_defined?("#{context}_with_taggable=")
+          define_method("#{context}_with_taggable=") do |value|
+            value = self.class.format_tags_for(context, value)
+            self.send("#{context}_without_taggable=", value)
+          end
+        else
+          re_define_method("#{context}_with_taggable=") do |value|
+            value = self.class.format_tags_for(context, value)
+            self.send("#{context}_without_taggable=", value)
+          end
         end
+        
         alias_method_chain "#{context}=", :taggable
       end
     end
@@ -314,15 +323,30 @@ module Mongoid::TaggableWithContext
     #
     # @since 1.1.1
     def define_instance_tag_string_getter(context)
-      generated_methods.module_eval do
-        re_define_method("#{context}_string") do
-          tag_string_for(context)
-        end
+      if Mongoid::Compatibility::Version.mongoid2?
+        generated_methods.module_eval do
+          undef_method("#{context}_string") if method_defined?("#{context}_string")
+          define_method("#{context}_string") do
+            tag_string_for(context)
+          end
 
-        re_define_method("#{context}_string=") do |value|
-          set_tag_string_for(context, value)
+          undef_method("#{context}_string=") if method_defined?("#{context}_string=")
+          define_method("#{context}_string=") do |value|
+            set_tag_string_for(context, value)
+          end
+        end
+      else
+        generated_methods.module_eval do
+          re_define_method("#{context}_string") do
+            tag_string_for(context)
+          end
+
+          re_define_method("#{context}_string=") do |value|
+            set_tag_string_for(context, value)
+          end
         end
       end
     end
+
   end
 end
