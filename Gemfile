@@ -16,5 +16,3 @@ case version = ENV['MONGOID_VERSION'] || "~> 5.0"
   else
     gem "mongoid", version
 end
-
-gem "mongoid-compatibility"
