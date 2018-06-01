@@ -7,13 +7,9 @@ services:
   - mongodb
 
 env:
-  - MONGOID_VERSION=2
   - MONGOID_VERSION=3
   - MONGOID_VERSION=4
   - MONGOID_VERSION=5
-
-matrix:
-  allow_failures:
-    - env: MONGOID_VERSION=2
+  - MONGOID_VERSION=6
 
 cache: bundler

@@ -312,8 +312,9 @@ module Mongoid::TaggableWithContext
             self.send("#{context}_without_taggable=", value)
           end
         end
-        
-        alias_method_chain "#{context}=", :taggable
+
+        alias_method "#{context}_without_taggable=", "#{context}="
+        alias_method "#{context}=", "#{context}_with_taggable="
       end
     end
 

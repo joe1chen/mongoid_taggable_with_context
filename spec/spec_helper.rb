@@ -25,6 +25,7 @@ Mongoid.configure do |config|
     config.master = database
     config.logger = nil
   else
-    config.connect_to("mongoid_taggable_with_context_test")
+    name = "mongoid_taggable_with_context_test"
+    config.respond_to?(:connect_to) ? config.connect_to(name) : config.master = Mongo::Connection.new.db(name)
   end
 end
