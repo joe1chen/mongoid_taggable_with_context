@@ -135,7 +135,12 @@ module Mongoid::TaggableWithContext::AggregationStrategy
     end
     
     def update_tags_aggregations_on_save
-      indifferent_changes = HashWithIndifferentAccess.new changes
+      if Mongoid::Compatibility::Version.mongoid7_or_older?
+        indifferent_changes = HashWithIndifferentAccess.new changes
+      else
+        indifferent_changes = HashWithIndifferentAccess.new previous_changes
+      end
+
       self.class.tag_database_fields.each do |field|
         next if indifferent_changes[field].nil?
 

@@ -53,7 +53,11 @@ module Mongoid::TaggableWithContext::AggregationStrategy
     
     protected
     def changed_tag_arrays
-      self.class.tag_database_fields & changes.keys.map(&:to_sym)
+      if Mongoid::Compatibility::Version.mongoid7_or_older?
+        self.class.tag_database_fields & changes.keys.map(&:to_sym)
+      else
+        self.class.tag_database_fields & previous_changes.keys.map(&:to_sym)
+      end
     end
     
     def tags_changed?
