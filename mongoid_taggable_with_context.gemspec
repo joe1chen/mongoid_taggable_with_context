@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.summary = "Mongoid taggable behaviour"
 
   s.add_development_dependency "bundler"
-  s.add_development_dependency "database_cleaner"
+  s.add_development_dependency('database_cleaner-mongoid')
   s.add_development_dependency "jeweler"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"
