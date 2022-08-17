@@ -39,14 +39,16 @@ class M3
   taggable :artists, group_by_field: :user
 end
 
-class M4
-  include Mongoid::Document
-  include Mongoid::TaggableWithContext
-  include Mongoid::TaggableWithContext::AggregationStrategy::Aggregation
+if Mongoid::Compatibility::Version.mongoid5_or_newer?
+  class M4
+    include Mongoid::Document
+    include Mongoid::TaggableWithContext
+    include Mongoid::TaggableWithContext::AggregationStrategy::Aggregation
 
-  field :user
-  taggable
-  taggable :a, as: :artists
+    field :user
+    taggable
+    taggable :a, as: :artists
+  end
 end
 
 describe Mongoid::TaggableWithContext do
@@ -670,6 +672,7 @@ describe Mongoid::TaggableWithContext do
     end
   end
 
+if Mongoid::Compatibility::Version.mongoid5_or_newer?
   context "aggregation aggregation" do
     let(:klass) { M4 }
     it_should_behave_like "aggregation"
@@ -682,7 +685,8 @@ describe Mongoid::TaggableWithContext do
       klass.aggregation_collection_for(:artists).should == "m4s_artists_aggregation"
     end
   end
-
+end
+  
   context "removed options" do
     it "should throw error if :field option is specified" do
       expect do
