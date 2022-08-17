@@ -39,6 +39,16 @@ class M3
   taggable :artists, group_by_field: :user
 end
 
+class M4
+  include Mongoid::Document
+  include Mongoid::TaggableWithContext
+  include Mongoid::TaggableWithContext::AggregationStrategy::Aggregation
+
+  field :user
+  taggable
+  taggable :a, as: :artists
+end
+
 describe Mongoid::TaggableWithContext do
   let(:sort) {
     if Mongoid::Compatibility::Version.mongoid2?
@@ -657,6 +667,19 @@ describe Mongoid::TaggableWithContext do
             ['andy', 1]
         ]
       end
+    end
+  end
+
+  context "aggregation aggregation" do
+    let(:klass) { M4 }
+    it_should_behave_like "aggregation"
+
+    it "should generate the tags aggregation collection name correctly" do
+      klass.aggregation_collection_for(:tags).should == "m4s_tags_aggregation"
+    end
+
+    it "should generate the artists aggregation collection name correctly" do
+      klass.aggregation_collection_for(:artists).should == "m4s_artists_aggregation"
     end
   end
 
