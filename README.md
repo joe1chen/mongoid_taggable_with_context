@@ -31,11 +31,12 @@ The gemspec allows `mongoid >= 7.0, < 10`.
 
 ## Installation
 
-This fork is not published to RubyGems; install it from GitHub:
+This fork is not published to RubyGems; install it from GitHub, pinned to a release tag
+([releases](https://github.com/joe1chen/mongoid_taggable_with_context/releases)):
 
 ```ruby
 # Gemfile
-gem 'mongoid_taggable_with_context', github: 'joe1chen/mongoid_taggable_with_context'
+gem 'mongoid_taggable_with_context', github: 'joe1chen/mongoid_taggable_with_context', tag: 'v2.0.0'
 ```
 
 ## Usage
@@ -169,18 +170,11 @@ what dogo-web runs today). To add a combination to CI, add a row to `matrix.incl
 
 ## History
 
-- **Unreleased (DOGOnews fork, 2026)** — GitHub Actions matrix up to Ruby 3.4 / Rails 8.0 / Mongoid 9.0 /
-  MongoDB 8.0; mongoid dependency `>= 7.0, < 10`; specs on RSpec 3.13; jeweler and Travis removed.
-  Fixes: `RealTime`/`RealTimeGroupBy` counts for aliased contexts (`taggable :ints, as: :interests` wrote to one
-  aggregation collection and read another); `recalculate_tag_weights!` / `recalculate_all_context_tag_weights!`
-  always raised `NoMethodError`; `tags_autocomplete` raised without `:max`.
-- **1.1.5–1.1.6 (DOGOnews fork, 2014–2022)** — Mongoid 2 and 4–8 support via mongoid-compatibility, `:limit`/`:sort`
-  conditions, separate group-by aggregation collections, new `Aggregation`
-  (aggregation pipeline) strategy, database_cleaner-mongoid.
-- **1.1.0–1.1.4 (lgs, 2013)** — `taggable <db_field>, as: <context>` syntax (the `:field` and `:string_method` options were
-  removed in 1.1.1), `RealTimeGroupBy`.
-- **Original** — Aaron Qian, based on [mongoid_taggable](https://github.com/ches/mongoid_taggable) by Wilker Lúcio
-  and Ches Martin.
+Aaron Qian's original (2011, based on mongoid_taggable by Wilker Lúcio and Ches Martin) was continued by
+lgs through 1.1.4 (2013: aliased contexts, `RealTimeGroupBy`) and by DOGOnews in this fork: 1.1.5–1.1.6
+(Mongoid 2 and 4–6 support, `:sort`/`:limit` conditions), then 2.0.0 (2026: Mongoid 7.0–9.x on current
+Ruby/Rails/MongoDB, the `Aggregation` strategy, and fixes for `RealTime` with aliased contexts).
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits
 
