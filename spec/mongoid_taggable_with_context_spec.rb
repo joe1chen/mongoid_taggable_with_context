@@ -527,6 +527,39 @@ describe Mongoid::TaggableWithContext do
     it "should generate the artists aggregation collection name correctly" do
       klass.aggregation_collection_for(:artists).should == "m2s_artists_aggregation"
     end
+
+    context "maintenance and autocomplete" do
+      before :each do
+        klass.create!(user: "user1", tags: "food ant bee", artists: "jeff mandy")
+        klass.create!(user: "user1", tags: "food bee zip", artists: "andy")
+      end
+
+      it "should rebuild the tag weights from the documents" do
+        klass.aggregation_database_collection_for(:tags).delete_many({})
+        klass.tags_with_weight.should == []
+
+        klass.recalculate_tag_weights!(:tags)
+        klass.tags_with_weight.should == [["ant", 1], ["bee", 2], ["food", 2], ["zip", 1]]
+      end
+
+      it "should rebuild the tag weights for all contexts" do
+        klass.aggregation_database_collection_for(:tags).delete_many({})
+        klass.aggregation_database_collection_for(:artists).delete_many({})
+
+        klass.recalculate_all_context_tag_weights!
+        klass.tags_with_weight.should == [["ant", 1], ["bee", 2], ["food", 2], ["zip", 1]]
+        klass.artists.should == %w[andy jeff mandy]
+      end
+
+      it "should autocomplete tags by prefix" do
+        klass.tags_autocomplete(:tags, "b").should == [["bee", 2]]
+        klass.tags_autocomplete(:tags, "f", max: 1).should == [["food", 2]]
+      end
+
+      it "should autocomplete tags sorted by count" do
+        klass.tags_autocomplete(:tags, "", sort_by_count: true, max: 2).map(&:last).should == [2, 2]
+      end
+    end
   end
 
   context "realtime aggregation group by" do

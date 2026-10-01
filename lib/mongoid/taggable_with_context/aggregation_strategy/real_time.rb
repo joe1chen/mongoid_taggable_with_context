@@ -45,7 +45,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
       end
 
       def recalculate_tag_weights!(context)
-        db_field = self.class.tag_options_for(context)[:db_field]
+        db_field = tag_options_for(context)[:db_field]
 
         map = <<-END
         function() {
@@ -66,7 +66,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
         if Mongoid::Compatibility::Version.mongoid2?
           collection.master.map_reduce(map, reduce, :out => aggregation_collection_for(context))
         else
-          self.class.map_reduce(map, reduce).out(replace: aggregation_collection_for(context)).time
+          map_reduce(map, reduce).out(replace: aggregation_collection_for(context)).time
         end
       end
 
@@ -74,7 +74,7 @@ module Mongoid::TaggableWithContext::AggregationStrategy
       def tags_autocomplete(context, criteria, options={})
         result = aggregation_database_collection_for(context).find({tag_name_attribute.to_sym => /^#{criteria}/})
         result = result.sort(value: -1) if options[:sort_by_count] == true
-        result = result.limit(options[:max]) if options[:max] > 0
+        result = result.limit(options[:max]) if options[:max].to_i > 0
         result.to_a.map{ |r| [r[tag_name_attribute], r["value"]] }
       end
 
