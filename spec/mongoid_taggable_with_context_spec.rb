@@ -26,7 +26,7 @@ class M2
 
   field :user
   taggable
-  taggable :artists
+  taggable :a, as: :artists
 end
 
 class M3
@@ -36,7 +36,7 @@ class M3
 
   field :user
   taggable group_by_field: :user
-  taggable :artists, group_by_field: :user
+  taggable :a, as: :artists, group_by_field: :user
 end
 
 if Mongoid::Compatibility::Version.mongoid5_or_newer?
