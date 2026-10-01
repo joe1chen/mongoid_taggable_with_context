@@ -7,7 +7,6 @@ Gem::Specification.new do |s|
   s.version = Mongoid::TaggableWithContext::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors = ["Aaron Qian", "Luca G. Soave", "John Shields", "Wilker Lucio", "Ches Martin"]
-  s.date = "2013-10-14"
   s.description = "Add multiple tag fields on Mongoid documents with aggregation capability."
   s.extra_rdoc_files = [
     "LICENSE.txt",
@@ -16,18 +15,17 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
 
-  s.homepage = "http://github.com/lgs/mongoid_taggable_with_context"
+  s.homepage = "https://github.com/joe1chen/mongoid_taggable_with_context"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.summary = "Mongoid taggable behaviour"
 
   s.add_development_dependency "bundler"
   s.add_development_dependency('database_cleaner-mongoid')
-  s.add_development_dependency "jeweler"
   s.add_development_dependency "rake"
-  s.add_development_dependency "rspec"
+  s.add_development_dependency "rspec", "~> 3.13"
   s.add_development_dependency "yard"
-  s.add_runtime_dependency "mongoid"
+  s.add_runtime_dependency "mongoid", ">= 7.0", "< 10"
   s.add_runtime_dependency "mongoid-compatibility"
 end
 

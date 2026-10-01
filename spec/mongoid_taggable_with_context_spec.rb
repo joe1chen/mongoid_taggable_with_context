@@ -695,7 +695,7 @@ end
           include Mongoid::TaggableWithContext
           taggable field: :foobar
         end
-      end.to raise_error
+      end.to raise_error(RuntimeError, /:field option has been removed/)
     end
     it "should throw error if :string_method option is specified" do
       expect do
@@ -704,7 +704,7 @@ end
           include Mongoid::TaggableWithContext
           taggable string_method: :foobar
         end
-      end.to raise_error
+      end.to raise_error(RuntimeError, /:string_method option has been removed/)
     end
     it "should throw error if GroupBy::TaggableWithContext module is included" do
       expect do
@@ -712,7 +712,7 @@ end
           include Mongoid::Document
           include Mongoid::TaggableWithContext::GroupBy::TaggableWithContext
         end
-      end.to raise_error
+      end.to raise_error(RuntimeError, /is no longer used/)
     end
     it "should throw error if GroupBy::AggregationStrategy::RealTime module is included" do
       expect do
@@ -720,7 +720,7 @@ end
           include Mongoid::Document
           include Mongoid::TaggableWithContext::GroupBy::AggregationStrategy::RealTime
         end
-      end.to raise_error
+      end.to raise_error(RuntimeError, /is no longer used/)
     end
   end
 end

@@ -26,3 +26,8 @@ Mongoid.configure do |config|
     config.respond_to?(:connect_to) ? config.connect_to(name) : config.master = Mongo::Connection.new.db(name)
   end
 end
+# RSpec 3 with the RSpec 2-era `should` syntax still enabled, so the existing specs run unchanged.
+RSpec.configure do |c|
+  c.expect_with(:rspec) { |e| e.syntax = [:should, :expect] }
+  c.mock_with(:rspec) { |m| m.syntax = [:should, :expect] }
+end
