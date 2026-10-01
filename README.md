@@ -1,222 +1,190 @@
-mongoid_taggable_with_context
-=============================
+# mongoid_taggable_with_context
 
-[![Build Status](https://github.com/joe1chen/mongoid_taggable_with_context/actions/workflows/test.yml/badge.svg)](https://github.com/joe1chen/mongoid_taggable_with_context/actions)
+[![CI RSpec Test](https://github.com/joe1chen/mongoid_taggable_with_context/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/joe1chen/mongoid_taggable_with_context/actions/workflows/test.yml)
 
-A tagging lib for Mongoid that allows for custom tagging along dynamic contexts. This gem was originally based on [mongoid_taggable](https://github.com/ches/mongoid_taggable) by Wilker Lúcio and Ches Martin. It has evolved substantially since that point, but all credit goes to them for the initial tagging functionality.
+Tagging for **Mongoid** documents with any number of independent tag *contexts* (e.g. `tags`, `skills`,
+`interests`) per model, each stored as an array field, plus optional tag-count aggregation (tag clouds) kept
+up to date in real time with `$inc`, or rebuilt with the aggregation pipeline or map-reduce.
 
-For instance, in a social network, a user might have tags that are called skills, interests, sports, and more. There is no real way to differentiate between tags and so an implementation of this type is not possible with `mongoid_taggable`.
+This is the [DOGOnews](https://www.dogonews.com)-maintained fork of
+[lgs/mongoid_taggable_with_context](https://github.com/lgs/mongoid_taggable_with_context) (inactive since
+August 2017; not archived), itself a fork of Aaron Qian's original
+[aq1018/mongoid_taggable_with_context](https://github.com/aq1018/mongoid_taggable_with_context) (inactive since
+2013). It is kept working on current Ruby, Rails, Mongoid and MongoDB versions.
 
-Another example, aggregation such as counting tag occurrences was achieved by map-reduce with `mongoid_taggable`. It was ok for small amount of tags, but when the amount of tags and documents grow, the original `mongoid_taggable` won't be able to scale to real-time statistics demand.
+## Supported versions
 
-Enter `mongoid_taggable_with_context`. Rather than tying functionality to a specific keyword (namely "tags"), `mongoid_taggable_with_context` allows you to specify an arbitrary number of *tag contexts* that can be used locally or in combination in the same way `mongoid_taggable` was used.
+Tested on every push by the [GitHub Actions matrix](https://github.com/joe1chen/mongoid_taggable_with_context/actions/workflows/test.yml)
+([workflow](.github/workflows/test.yml)), with all four aggregation strategies:
 
-`mongoid_taggable_with_context` also provides flexibility on aggregation strategy. In addition to the map-reduce strategy, this gem also comes with real-time strategy. By using real-time strategy, your document can quickly adjusts the aggregation collection whenever tags are inserted or removed with $inc operator. So performance won't be impacted as the number of tags and documents grow.
+| Ruby | Rails | Mongoid | MongoDB |
+|---|---|---|---|
+| 2.7 | 6.1 | 7.5 | 6.0 |
+| 3.0 | 6.1 | 8.0 | 6.0 |
+| 3.1 | 7.0 | 8.1 | 7.0 |
+| 3.2 | 7.1 | 8.1 | 7.0 |
+| 3.2 | 7.2 | 9.0 | 7.0 |
+| 3.3 | 7.2 | 9.0 | 8.0 |
+| 3.4 | 8.0 | 9.0 | 8.0 |
 
-Installation
-------------
+The gemspec allows `mongoid >= 7.0, < 10`.
 
-You can simply install from rubygems:
+## Installation
 
-```
-gem install mongoid_taggable_with_context
-```
-
-or in Gemfile:
+This fork is not published to RubyGems; install it from GitHub:
 
 ```ruby
-gem 'mongoid_taggable_with_context'
+# Gemfile
+gem 'mongoid_taggable_with_context', github: 'joe1chen/mongoid_taggable_with_context'
 ```
 
+## Usage
 
-The "taggable" Macro Function
------------------------------
-
-Use the `taggable` macro function in your model to
-declare a tags field. Specify `field name`
-for tags, and `options` for tagging behavior.
-
-Example:
-
-   ```ruby
-   class Article
-     include Mongoid::Document
-     include Mongoid::TaggableWithContext
-     taggable :keywords, separator: ' ', default: ['foobar']
-   end
-   ```
-
-* `@param [ Symbol ] field`
-
-   (Optional) The name of the field for tags. Defaults to "tags"
-
-
-* `@param [ Hash ] options`
-
-   (Optional) Options for taggable behavior.
-
-
-    * `@option [ String ] :separator`
-
-        The delimiter used when converting the tags to and from String format. Defaults to " "
-
-
-    * `@option [ :Symbol ] :group_by_field`
-
-        The Mongoid field to group by when RealTimeGroupBy aggregation is used.
-
-
-    * `@option [ <various> ] :default, :as, :localize, etc.`
-
-        Options for Mongoid #field method will be automatically passed
-        to the underlying Array field (with the exception of `:type`,
-        which is coerced to `Array`).
-
-
-Example Usage
--------------
-
-To make a document taggable you need to include Mongoid::TaggableOnContext
-into your document and call the *taggable* macro with optional arguments:
+### Declare tag contexts
 
 ```ruby
 class Post
   include Mongoid::Document
   include Mongoid::TaggableWithContext
 
-  field :title
-  field :content
-
-  # default context is 'tags'.
-  # This creates #tags, #tags=, #tag_string instance methods
-  # separator is " " by default
-  # #tags method returns an array of tags
-  # #tags= methods accepts an array of tags or a separated string
-  # #tag_string method returns a separated string
-  taggable
-
-  # tagging for 'skills' context.
-  # This creates #skills, #skills=, #skills_string instance methods
-  # changing tag separator to "," (Default is " ")
-  taggable :skills, separator: ','
-
-  # aliased context tagging.
-  # This creates #interests, #interests=, #interests_string instance methods
-  # The tags will be stored in a database field called 'ints'
-  taggable :ints, as: :interests
+  taggable                                    # context :tags, separator ' '
+  taggable :skills, separator: ','            # context :skills
+  taggable :ints, as: :interests              # context :interests, stored in the database field "ints"
+  taggable :keywords, default: ['foobar']     # other Mongoid field options (:default, :as, :localize, ...) pass through
 end
 ```
 
-Then in your form, for example:
+`taggable [field], options` creates an `Array` field (and an index on it). Options:
 
-```rhtml
-<% form_for @post do |f| %>
-  <p>
-    <%= f.label :title %><br />
-    <%= f.text_field :title %>
-  </p>
-  <p>
-    <%= f.label :content %><br />
-    <%= f.text_area :content %>
-  </p>
-  <p>
-    <%= f.label :tags %><br />
-    <%= text_field_tag 'post[tags]' %>
-  </p>
-  <p>
-    <%= f.label :interests %><br />
-    <%= text_field_tag 'post[interests]' %>
-  </p>
-  <p>
-    <%= f.label :skills %><br />
-    <%= text_field_tag 'post[skills]' %>
-  </p>
-  <p>
-    <button type="submit">Send</button>
-  </p>
-<% end %>
+- `separator:` — delimiter used to split/join tag strings (default `' '`).
+- `as:` — name of the context when it differs from the database field name.
+- `group_by_field:` — the field to group by, for the `RealTimeGroupBy` strategy.
+- any option accepted by Mongoid's `field` (`type` is always `Array`).
+
+### Instance methods
+
+For a context `tags`:
+
+```ruby
+post.tags = "food ant bee"        # a separated String or an Array
+post.tags = %w[food ant bee]
+post.tags                         # => ["food", "ant", "bee"]  (stripped, blanks and duplicates removed)
+post.tags_string                  # => "food ant bee"
+post.tags_string = "x y"          # same as post.tags = "x y"
 ```
 
+### Querying
 
-Aggregation Strategies
-----------------------
+```ruby
+Post.tagged_with(:tags, "food bee")       # documents having ALL the given tags (String or Array)
+Post.tags_tagged_with(%w[food bee])       # same, per-context shortcut
+Post.skills_separator                     # => ","
+Post.tag_contexts                         # => [:tags, :skills, :interests, :keywords]
+```
 
-By including an aggregation strategy in your document, tag aggregations will be automatically available to you.
-This lib presents the following aggregation strategies:
+### Aggregation strategies
 
-* MapReduce
-* RealTime
-* RealTimeGroupBy
+Include one strategy to get tag lists and weights (counts) per context. Each strategy keeps the counts in a
+collection named `<collection>_<context>_aggregation`.
 
-The following document will automatically aggregate counts on all tag contexts.
+| Strategy | How counts are maintained |
+|---|---|
+| `AggregationStrategy::RealTime` | `$inc` on every save/destroy — constant cost as data grows (recommended) |
+| `AggregationStrategy::RealTimeGroupBy` | `RealTime` plus per-group counts (by `group_by_field`) |
+| `AggregationStrategy::Aggregation` | full `$group`/`$out` aggregation pipeline after each save that changes tags |
+| `AggregationStrategy::MapReduce` | full map-reduce after each save that changes tags (`mapReduce` is deprecated by MongoDB) |
 
 ```ruby
 class Post
   include Mongoid::Document
   include Mongoid::TaggableWithContext
-
-  # automatically adds real time aggregations to all tag contexts
   include Mongoid::TaggableWithContext::AggregationStrategy::RealTime
 
-  # alternatively for map-reduce
-  # include Mongoid::TaggableWithContext::AggregationStrategy::MapReduce
-
-  field :title
-  field :content
-
   taggable
   taggable :skills, separator: ','
-  taggable :ints, as: interests
 end
+
+Post.create!(tags: "food ant bee")
+Post.create!(tags: "juice food bee zip")
+Post.create!(tags: "honey strip food")
+
+Post.tags              # => ["ant", "bee", "food", "honey", "juice", "strip", "zip"]
+Post.tags_with_weight  # => [["ant", 1], ["bee", 2], ["food", 3], ["honey", 1], ["juice", 1], ["strip", 1], ["zip", 1]]
+
+# optional conditions on the aggregation collection, plus :limit and :sort
+Post.tags_with_weight(nil, limit: 2, sort: { value: -1 })   # => [["food", 3], ["bee", 2]]
 ```
 
-When you include an aggregation strategy, your document also gains a few extra methods to retrieve aggregation data.
-In the case of previous example the following methods are included:
+`RealTime` (and `RealTimeGroupBy`) also provide:
 
 ```ruby
-Post.tags
-Post.tags_with_weight
-Post.interests
-Post.interests_with_weight
-Post.skills
-Post.skills_with_weight
+Post.tags_autocomplete(:tags, "f")                               # => [["food", 3]]  tags starting with "f"
+Post.tags_autocomplete(:tags, "b", sort_by_count: true, max: 10)
+Post.recalculate_tag_weights!(:tags)                             # rebuild one context's counts from the documents
+Post.recalculate_all_context_tag_weights!                        # rebuild every context (uses map-reduce)
 ```
 
-Here is how to use these methods in more detail:
+#### Group-by counts
 
 ```ruby
-Post.create!(tags: "food,ant,bee")
-Post.create!(tags: "juice,food,bee,zip")
-Post.create!(tags: "honey,strip,food")
+class Post
+  include Mongoid::Document
+  include Mongoid::TaggableWithContext
+  include Mongoid::TaggableWithContext::AggregationStrategy::RealTimeGroupBy
 
-Post.tags # will retrieve ["ant", "bee", "food", "honey", "juice", "strip", "zip"]
-Post.tags_with_weight # will retrieve:
-# [
-#   ['ant', 1],
-#   ['bee', 2],
-#   ['food', 3],
-#   ['honey', 1],
-#   ['juice', 1],
-#   ['strip', 1],
-#   ['zip', 1]
-# ]
+  field :user
+  taggable group_by_field: :user
+end
+
+Post.create!(user: "u1", tags: "a b")
+Post.create!(user: "u2", tags: "b c")
+
+Post.tags                    # => ["a", "b", "c"]
+Post.tags("u1")              # => ["a", "b"]
+Post.tags_with_weight("u2")  # => [["b", 1], ["c", 1]]
+Post.tags_group_by_field     # => :user
 ```
 
+Without an aggregation strategy, `Post.tags` / `Post.tags_with_weight` raise
+`Mongoid::TaggableWithContext::AggregationStrategyMissing`.
 
-Contributing to mongoid_taggable_with_context
------------------------------------------------
+## Development
 
-* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
-* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
-* Fork the project
-* Start a feature/bugfix branch
-* Commit and push until you are happy with your contribution
-* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+```bash
+# needs a MongoDB on localhost:27017 (e.g. docker run -p 27017:27017 mongo:8.0)
+MONGOID_VERSION=9.0 RAILS_VERSION=8.0 bundle install
+MONGOID_VERSION=9.0 RAILS_VERSION=8.0 bundle exec rspec spec
+```
 
+`MONGOID_VERSION` and `RAILS_VERSION` select the versions in the `Gemfile` (defaults: Mongoid 7.5, Rails 6.1 —
+what dogo-web runs today). To add a combination to CI, add a row to `matrix.include` in
+`.github/workflows/test.yml`.
 
-Copyright
----------
+## Known issues
 
-Copyright (c) 2011 Aaron Qian. See LICENSE.txt for
-further details.
+- `MapReduce` (and `RealTime.recalculate_tag_weights!`) use MongoDB's `mapReduce` command, which is deprecated
+  since MongoDB 5.0 but still works on 8.0 (tested). Prefer `RealTime` or `Aggregation` for new code.
+- `tags_autocomplete` interpolates its prefix into a regular expression unescaped, so regex metacharacters in user
+  input are interpreted (escape with `Regexp.escape` before calling if the prefix comes from users).
+
+## History
+
+- **Unreleased (DOGOnews fork, 2026)** — GitHub Actions matrix up to Ruby 3.4 / Rails 8.0 / Mongoid 9.0 /
+  MongoDB 8.0; mongoid dependency `>= 7.0, < 10`; specs on RSpec 3.13; jeweler and Travis removed.
+  Fixes: `RealTime`/`RealTimeGroupBy` counts for aliased contexts (`taggable :ints, as: :interests` wrote to one
+  aggregation collection and read another); `recalculate_tag_weights!` / `recalculate_all_context_tag_weights!`
+  always raised `NoMethodError`; `tags_autocomplete` raised without `:max`.
+- **1.1.5–1.1.6 (DOGOnews fork, 2014–2022)** — Mongoid 2 and 4–8 support via mongoid-compatibility, `:limit`/`:sort`
+  conditions, separate group-by aggregation collections, new `Aggregation`
+  (aggregation pipeline) strategy, database_cleaner-mongoid.
+- **1.1.0–1.1.4 (lgs, 2013)** — `taggable <db_field>, as: <context>` syntax (the `:field` and `:string_method` options were
+  removed in 1.1.1), `RealTimeGroupBy`.
+- **Original** — Aaron Qian, based on [mongoid_taggable](https://github.com/ches/mongoid_taggable) by Wilker Lúcio
+  and Ches Martin.
+
+## Credits
+
+Aaron Qian, Luca G. Soave, John Shields, Wilker Lúcio, Ches Martin, and
+[contributors](https://github.com/joe1chen/mongoid_taggable_with_context/graphs/contributors).
+
+Copyright (c) 2011 Aaron Qian. Licensed under the MIT license (see [LICENSE.txt](LICENSE.txt)).
